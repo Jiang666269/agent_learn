@@ -1,0 +1,18 @@
+[
+    {
+        "type": "profile",
+        "content": "用户希望被称为 Knife"
+    },
+    {
+        "type": "preference",
+        "content": "代码示例使用 Python"
+    },
+    {
+        "type": "preference",
+        "content": "回答内容尽量有逻辑顺序"
+    },
+    {
+        "type": "profile",
+        "content": "用户（Knife）的爱好之一是打羽毛球"
+    }
+]
