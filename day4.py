@@ -21,22 +21,95 @@ embedding_model = SentenceTransformer(
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )
 
-#知识库 Chunk
-knowledge_base = [
+#读取资料文件
+def load_document(file_path):
+    with open(file_path,"r",encoding="utf-8") as file:
+        return file.read()
+
+#自动切Chunk,按字符长度切
+def split_by_length(text,chunk_size=200,overlap=50):
+    chunks = []
+    start = 0
+
+    while start < len(text):
+        end = start + chunk_size
+
+        chunk = text[start:end]
+
+        chunks.append(chunk)
+
+        start += chunk_size - overlap
+
+    return chunks
+
+#自动切Chunk 按段落切分
+def split_by_paragraph(text):
+    paragraphs = text.split("\n\n") #遇到两个换行符就认为进入了新的段落
+
+    chunks = []
+
+    for paragraph in paragraphs:
+
+        paragraph = paragraph.strip() #去空格 换行 制表符
+
+        if paragraph:
+            chunks.append(paragraph)
+    return chunks
+
+#自动切chunk 段落优先+长度限制 (段落太长1）
+def split_text(text,chunk_size=200,overlap=50): # chunk_size过大会导致检索精度下降，overlap过大同样
+    paragraphs = text.split("\n\n")
+
+    chunks = []
+
+    for paragraph in paragraphs:
+
+        paragraph = paragraph.strip()
+
+        if not paragraph:
+            continue
+
+        if len(paragraph) <= chunk_size:
+            chunks.append(paragraph)
+
+        else:
+            start = 0
+
+            while start < len(paragraph):
+                end = start + chunk_size
+
+                chunk = paragraph[start:end]
+
+                chunks.append(chunk)
+
+                start += chunk_size - overlap
+    return chunks
+
+#调用
+document = load_document("rust_notes.txt")
+
+#按字符长度切        knowledge_base = split_by_length(document,chunk_size=200,overlap=50)
+
+knowledge_base = split_by_paragraph(document)
+
+#知识库 Chunk,已优化
+'''knowledge_base = [
     "Rust 的所有权系统用于管理内存，每个值都有一个所有者。",
     "当变量离开作用域时，Rust 会自动释放它拥有的数据。",
     "借用允许程序在不转移所有权的情况下访问数据。",
     "Rust 的生命周期用于描述引用保持有效的范围。",
     "Python 的列表是一种可变序列。"
-]
+]'''
 
-# 3. 提前生成所有 Chunk 的向量
+
+
+#提前生成所有 Chunk 的向量
 chunk_embeddings = embedding_model.encode(
     knowledge_base,
     normalize_embeddings=True #把每个向量归一化，点积直接表示Cosine Similarity
-)#chunk_embeddings实际上是很多个向量组成的矩阵
+)  #chunk_embeddings 实际上是很多个向量组成的矩阵
 
-# 4. 检索函数，query：用户问题
+#检索函数，query：用户问题
 def retrieve(query, top_k=3, threshold=0.4):
 
     query_embedding = embedding_model.encode(
@@ -68,7 +141,7 @@ def retrieve(query, top_k=3, threshold=0.4):
 
     return results
 
-# 5. RAG
+#RAG
 
 def run_rag(user_input):
 
