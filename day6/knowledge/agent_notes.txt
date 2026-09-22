@@ -1,0 +1,25 @@
+AI Agent 可以理解为能够根据目标自主选择下一步行动，并调用外部工具完成任务的智能系统。LLM 通常负责理解任务、推理和决定下一步操作。
+
+Tool Calling 是 AI Agent 的重要机制。LLM 并不会真正执行 Python 函数，而是根据 Tool 描述决定调用哪个工具以及需要哪些参数。
+
+程序收到 LLM 返回的 Tool Call 后，需要由 Python 实际执行对应函数。执行结果随后可以重新加入 Context，再交给 LLM 继续推理。
+
+Agent Loop 是 Agent 的核心执行流程。一个简单的循环通常包括：LLM 推理、判断是否需要调用工具、执行工具、返回工具结果，然后再次调用 LLM。
+
+为了避免 Agent 无限循环，程序通常会设置 max_steps。max_steps 可以限制 Agent 最多执行多少轮推理和工具调用，同时也可以控制 API 调用次数、运行时间和成本。
+
+Memory 用于保存与用户有关的长期信息，例如用户偏好、学习目标或长期项目。Memory 通常需要持久化保存，并在需要时重新注入 Context。
+
+RAG 的全称是 Retrieval-Augmented Generation，即检索增强生成。RAG 会先从外部知识库中检索相关资料，再把资料放入 Context，让 LLM 根据这些资料回答问题。
+
+RAG 通常包括文档读取、Chunk、Embedding、向量检索和 LLM 生成几个阶段。向量数据库可以用来保存 Embedding，并根据查询向量找到最相关的 Chunk。
+
+Chroma 是一种向量数据库工具，可以保存文档、Embedding、ID 和 metadata。通过 Collection 可以管理一组相关的向量数据。
+
+增量更新是知识库维护中的一种常见方法。程序不需要每次重新处理所有文件，而是只处理新增、修改或删除的文件。
+
+在当前多文件 RAG 系统中，可以通过记录文件最后修改时间来判断某个文件是否发生变化。如果文件没有变化，就跳过重新 Embedding。
+
+如果某个文件被修改，可以先删除 Chroma 中属于这个文件的旧 Chunk，然后重新进行 Chunk、Embedding 和 upsert，从而避免旧数据残留。
+
+如果某个文件从 knowledge 文件夹中被删除，也应该同步删除 Chroma 中对应的 Chunk，这样可以保证本地文件和向量数据库中的数据保持一致。
